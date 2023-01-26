@@ -1,6 +1,8 @@
 import fastify from 'fastify'
 import { join } from 'path';
 
+const helmet = require('@fastify/helmet')
+
 require('dotenv').config({ path: join(__dirname, '../config.conf') })
 
 const app = fastify({
@@ -28,6 +30,19 @@ app.register(import('@fastify/rate-limit'), {
   global: false,
   max: 100,
   timeWindow: '1 minute'
+})
+
+app.register(
+  helmet,
+  { contentSecurityPolicy: false }
+)
+
+app.addHook('onSend', (request: any, reply: any, playload: any, next: any) => {
+  reply.headers({
+    'X-Powered-By': 'R7 Health Platform - HDC Services',
+    'X-Processed-By': process.env.R7_DASHBOARD_SERVICE_HOSTNAME || 'dummy-server',
+  })
+  next()
 })
 
 // Database
@@ -63,25 +78,6 @@ app.register(require('./plugins/jwt'), {
     authorizationTokenInvalid: (err: any) => {
       return `Authorization token is invalid: ${err.message}`
     }
-  }
-})
-
-// Axios
-app.register(require('fastify-axios'), {
-  clients: {
-    nhso7: {
-      baseURL: 'https://khonkaen2.nhso.go.th/api.php',
-      headers: {
-        'Authorization': 'Bearer ' + process.env.R7_DASHBOARD_NHSO7_TOKEN
-      }
-    },
-    cockpit: {
-      baseURL: 'https://r7.moph.go.th/cpreg7/api',
-      headers: {
-        'Authorization': 'Bearer ' + process.env.R7_DASHBOARD_COCKPIT_TOKEN
-      }
-    },
-
   }
 })
 
