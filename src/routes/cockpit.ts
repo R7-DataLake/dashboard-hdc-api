@@ -1,5 +1,5 @@
-import { AxiosResponse } from "axios";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { getReasonPhrase, StatusCodes } from "http-status-codes";
 
 export default async (fastify: FastifyInstance) => {
 
@@ -7,14 +7,14 @@ export default async (fastify: FastifyInstance) => {
     onRequest: [fastify.authenticate]
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const rs: AxiosResponse = await fastify.axios.cockpit.get('/health-check')
+      await fastify.axios.cockpit.get('/health-check')
       reply
-        .status(200)
-        .send({ ok: true, results: rs.data })
+        .status(StatusCodes.OK)
+        .send(getReasonPhrase(StatusCodes.OK))
     } catch (error) {
       reply
-        .status(500)
-        .send({ ok: false, error })
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .send(getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR))
     }
   })
 
